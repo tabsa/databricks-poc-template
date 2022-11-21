@@ -120,13 +120,13 @@ class TrainTask(Task):
         # 2. Building the training dataset (by adding enrichment layers)
         # ==================================
         try:
-            # # Initialize the Feature Store client
-            # fs = feature_store.FeatureStoreClient()    
+            # Initialize the Feature Store client
+            fs = feature_store.FeatureStoreClient()    
             # Load feature store tables
             enrich_1_data = fs.read_table(name=enrich_1_table)
             enrich_2_data = fs.read_table(name=enrich_2_table)
             # Join enrichment tables
-            enrich_data = enrich_1_data.join(enrich_2_data, 'trxn_id')
+            # enrich_data = enrich_1_data.join(enrich_2_data, 'trxn_id')
             feature_lookups = [ ### Clarify
                 FeatureLookup( 
                 table_name = f"{fs_db}.{fs_table}",
@@ -139,7 +139,7 @@ class TrainTask(Task):
             exclude_columns = ['trxn_id']
             training_set = fs.create_training_set(
                 df = raw_data_with_labels,
-                feature_lookups = enrich_2_data, #feature_lookups,
+                feature_lookups = feature_lookups,
                 label = "Class",
                 exclude_columns = exclude_columns
             )

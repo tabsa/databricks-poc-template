@@ -7,8 +7,8 @@ data:
     enrich1: "fraud_features_enrich1"
     enrich2: "fraud_features_enrich2"
     label_table: "fraud_label" 
-    fs_database: "fraud_feature_store"
-    fs_table: "enrich_features"
+    fs_database: "default"
+    fs_table: "fraud_features_enrich2"
   output:
     database: "default"
     random_state: "92"

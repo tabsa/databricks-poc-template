@@ -89,18 +89,19 @@ class TrainTask(Task):
             labels = spark.table(f"{db_in}.{label_table}")
             
             # Joining raw_data and labels
-            raw_data_with_labels = raw_data.join(labels, ['Id','date','hour'])
+            # raw_data_with_labels = raw_data.join(labels, ['Id','date','hour'])
+            raw_data_with_labels = raw_data.join(labels, ['trxn_id'])
             display(raw_data_with_labels)
             
-            # Selection of the data and labels until last LARGE time step (e.g. day or week let's say)
-            # Hence we will remove the last large timestep of the data
-            # max_hour = raw_data_with_labels.select("hour").rdd.max()[0]
-            max_date = raw_data_with_labels.select("date").rdd.max()[0]
-            print(max_date)
-            # raw_data_with_labels = raw_data_with_labels.withColumn("filter_out", when((col("hour")==max_hour) & (col("date")==max_date),"1").otherwise(0)) # don't take last hour of last day of data
-            raw_data_with_labels = raw_data_with_labels.withColumn("filter_out", when(col("date")==max_date,"1").otherwise(0)) # don't take last day of data
-            raw_data_with_labels = raw_data_with_labels.filter("filter_out==0").drop("filter_out")
-            display(raw_data_with_labels)
+            # # Selection of the data and labels until last LARGE time step (e.g. day or week let's say)
+            # # Hence we will remove the last large timestep of the data
+            # # max_hour = raw_data_with_labels.select("hour").rdd.max()[0]
+            # max_date = raw_data_with_labels.select("date").rdd.max()[0]
+            # print(max_date)
+            # # raw_data_with_labels = raw_data_with_labels.withColumn("filter_out", when((col("hour")==max_hour) & (col("date")==max_date),"1").otherwise(0)) # don't take last hour of last day of data
+            # raw_data_with_labels = raw_data_with_labels.withColumn("filter_out", when(col("date")==max_date,"1").otherwise(0)) # don't take last day of data
+            # raw_data_with_labels = raw_data_with_labels.filter("filter_out==0").drop("filter_out")
+            # display(raw_data_with_labels)
             
             self.logger.info("Step 1.0 completed: Loaded historical raw data and labels")   
           

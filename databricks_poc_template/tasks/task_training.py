@@ -9,7 +9,7 @@ import json
 from pyspark.sql.functions import *
 
 # Import matplotlib packages
-from IPython.core.pylabtools import figsize
+# from IPython.core.pylabtools import figsize
 from matplotlib import pyplot as plt
 import pylab
 from pylab import *
@@ -21,6 +21,9 @@ from sklearn.metrics import accuracy_score, roc_curve, auc, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
+
+# XGBoost package
+import xgboost as xgb
 
 # Databricks packages
 from mlflow.tracking import MlflowClient
@@ -68,6 +71,7 @@ class TrainTask(Task):
  
         model_name = model_conf["model_name"] 
         experiment = model_conf["experiment_name"] 
+        model_seed = model_conf['hyperparameters_fixed']['random_state']
         mlflow.set_experiment(experiment) # Define the MLFlow experiment location
 
         # =======================
@@ -169,15 +173,15 @@ class TrainTask(Task):
         # ========================================
         try:            
             with mlflow.start_run() as run:    
-                mlflow.sklearn.autolog()                      
+                mlflow.xgboost.autolog()                      
 
                 print("Active run_id: {}".format(run.info.run_id))
                 self.logger.info("Active run_id: {}".format(run.info.run_id))
 
-                # Model definition
-                base_estimator = RandomForestClassifier(oob_score = True,
-                                                        random_state=21,
-                                                        n_jobs=-1)   
+                # Model definition  
+                base_estimator = xgb.XGBClassifier(objective='binary:logistic',
+                                                   random_state=model_seed, 
+                                                   n_jobs=-1)
 
                 CV_rfc = GridSearchCV(estimator=base_estimator, 
                                     param_grid=model_conf['hyperparameters_grid'],

@@ -241,7 +241,7 @@ class TrainTask(Task):
                 
                 # Register the model to the Model Registry
                 print(mlflow.get_registry_uri())
-                mlflow.sklearn.log_model(model, 
+                mlflow.xgboost.log_model(model, 
                                         model_name,
                                         registered_model_name=model_name,
                                         signature=signature,

@@ -199,10 +199,12 @@ class TrainTask(Task):
                 # Tracking the model parameters
                 train_version = module.get_table_version(spark,f"{db_out}.{train_dataset}")
                 test_version = module.get_table_version(spark,f"{db_out}.{test_dataset}")
-                fs_table_version = module.get_table_version(spark,f"{fs_db}.{fs_table}")
+                fs_enrich_1_table_version = module.get_table_version(spark,f"{fs_db}.{fs_enrich_1_table}")
+                fs_enrich_2_table_version = module.get_table_version(spark,f"{fs_db}.{fs_enrich_2_table}")
                 mlflow.set_tag("train_version", train_version)
                 mlflow.set_tag("test_version", test_version)
-                mlflow.set_tag("fs_table_version", fs_table_version) # Feature store version
+                mlflow.set_tag("fs_enrich_1_table_version", fs_enrich_1_table_version) # Feature store version
+                mlflow.set_tag("fs_enrich_2_table_version", fs_enrich_2_table_version) # Feature store version
                 mlflow.set_tag("train", f"{db_out}.{train_dataset}")
                 mlflow.set_tag("test", f"{db_out}.{test_dataset}")
                 mlflow.set_tag("raw_data", f"{db_in}.{raw_data_table}") # Fraud features base

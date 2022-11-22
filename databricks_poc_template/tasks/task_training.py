@@ -53,11 +53,10 @@ class TrainTask(Task):
 
         db_in = input_conf["database"]  
         raw_data_table = input_conf["raw_data_table"]  
-        enrich_1_table = input_conf["enrich1"]  
-        enrich_2_table = input_conf["enrich2"]  
         label_table = input_conf["label_table"] 
         fs_db = input_conf["fs_database"] 
-        fs_table = input_conf["fs_table"]          
+        fs_enrich_1_table = input_conf["fs_table"]
+        fs_enrich_2_table = input_conf["fs_table"]
 
         # Output
         output_conf = self.conf["data"]["output"]
@@ -87,25 +86,13 @@ class TrainTask(Task):
         for l in listing:
             self.logger.info(f"DBFS directory: {l}")           
 
-        try:        
-            # Initialize the Feature Store client
-            fs = feature_store.FeatureStoreClient()
+        try:
             # Load the raw data and associated label tables
             raw_data = spark.table(f"{db_in}.{raw_data_table}")
             labels = spark.table(f"{db_in}.{label_table}")
             
             # Joining raw_data and labels
-            raw_data_with_labels = raw_data.join(labels, ['Id','date','hour'])
-            display(raw_data_with_labels)
-            
-            # Selection of the data and labels until last LARGE time step (e.g. day or week let's say)
-            # Hence we will remove the last large timestep of the data
-            # max_hour = raw_data_with_labels.select("hour").rdd.max()[0]
-            max_date = raw_data_with_labels.select("date").rdd.max()[0]
-            print(max_date)
-            # raw_data_with_labels = raw_data_with_labels.withColumn("filter_out", when((col("hour")==max_hour) & (col("date")==max_date),"1").otherwise(0)) # don't take last hour of last day of data
-            raw_data_with_labels = raw_data_with_labels.withColumn("filter_out", when(col("date")==max_date,"1").otherwise(0)) # don't take last day of data
-            raw_data_with_labels = raw_data_with_labels.filter("filter_out==0").drop("filter_out")
+            raw_data_with_labels = raw_data.join(labels, ['trxn_id'])
             display(raw_data_with_labels)
             
             self.logger.info("Step 1.0 completed: Loaded historical raw data and labels")   
@@ -122,14 +109,20 @@ class TrainTask(Task):
         try:
             # Initialize the Feature Store client
             fs = feature_store.FeatureStoreClient()    
-            # Load feature store tables
-            enrich_1_data = fs.read_table(name=enrich_1_table)
-            enrich_2_data = fs.read_table(name=enrich_2_table)
-            # Join enrichment tables
-            # enrich_data = enrich_1_data.join(enrich_2_data, 'trxn_id')
-            feature_lookups = [ ### Clarify
+            # # Load feature store tables
+            # enrich_1_data = fs.read_table(name=enrich_1_table)
+            # enrich_2_data = fs.read_table(name=enrich_2_table)
+            fs_enrich_1_lookups = [ ### Clarify
                 FeatureLookup( 
-                table_name = f"{fs_db}.{fs_table}",
+                table_name = f"{fs_db}.{fs_enrich_1_table}",
+                feature_names = ['V21', 'V22', 'V23', 'V24'],
+                lookup_key = 'trxn_id',
+                ),
+            ]
+
+            fs_enrich_2_lookups = [ ### Clarify
+                FeatureLookup( 
+                table_name = f"{fs_db}.{fs_enrich_2_table}",
                 feature_names = ['V25', 'V26', 'V27', 'V28', 'Amount'],
                 lookup_key = 'trxn_id',
                 ),
@@ -139,7 +132,7 @@ class TrainTask(Task):
             exclude_columns = ['trxn_id']
             training_set = fs.create_training_set(
                 df = raw_data_with_labels,
-                feature_lookups = feature_lookups,
+                feature_lookups = [fs_enrich_1_lookups, fs_enrich_2_lookups],
                 label = "Class",
                 exclude_columns = exclude_columns
             )

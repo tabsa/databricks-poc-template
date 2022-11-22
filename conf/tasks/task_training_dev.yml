@@ -4,11 +4,10 @@ data:
   input:
     database: "default"
     raw_data_table: "fraud_features_base" 
-    enrich1: "fraud_features_enrich1"
-    enrich2: "fraud_features_enrich2"
     label_table: "fraud_label" 
     fs_database: "default"
-    fs_table: "fraud_features_enrich2"
+    fs_enrich_1_table: "fraud_features_enrich1"
+    fs_enrich_2_table: "fraud_features_enrich2"
   output:
     database: "default"
     random_state: "92"

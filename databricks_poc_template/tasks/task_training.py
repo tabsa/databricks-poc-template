@@ -55,8 +55,8 @@ class TrainTask(Task):
         raw_data_table = input_conf["raw_data_table"]  
         label_table = input_conf["label_table"] 
         fs_db = input_conf["fs_database"] 
-        fs_enrich_1_table = input_conf["fraud_features_enrich1"]
-        fs_enrich_2_table = input_conf["fraud_features_enrich2"]
+        fs_enrich_1_table = input_conf["fs_enrich_1_table"]
+        fs_enrich_2_table = input_conf["fs_enrich_2_table"]
 
         # Output
         output_conf = self.conf["data"]["output"]

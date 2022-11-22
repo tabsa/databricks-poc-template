@@ -169,7 +169,7 @@ class ValidationTask(Task):
             print(C)
 
             # Figure plot
-            fig = show_confusion_matrix(y_test, y_test_pred, 'confusion_matrix_TEST.png')
+            # fig = show_confusion_matrix(y_test, y_test_pred, 'confusion_matrix_TEST.png')
             # fig = plt.figure()
             # ax = fig.add_subplot(111)
             # cax = ax.matshow(C,cmap='Blues')
@@ -188,7 +188,8 @@ class ValidationTask(Task):
                 mlflow.log_metric("roc_score_TEST", test_roc_score)
                 mlflow.log_metric("precision_recall_TEST", test_prec_recall)
                 mlflow.log_metric("f1_score_TEST", test_f1_score)
-                mlflow.log_figure(fig, "confusion_matrix_TEST.png")  
+                mlflow.log_metric("Confusion matrix", C)
+                # mlflow.log_figure(fig, "confusion_matrix_TEST.png")  
 
                 # IF we pass the validation, we push the model to Staging tag 
                 print(f"Minimal accuracy threshold: {minimal_threshold:5.2f}")          

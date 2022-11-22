@@ -112,27 +112,24 @@ class TrainTask(Task):
             # # Load feature store tables
             # enrich_1_data = fs.read_table(name=enrich_1_table)
             # enrich_2_data = fs.read_table(name=enrich_2_table)
-            fs_enrich_1_lookups = [ ### Clarify
+            feature_lookups = [ 
                 FeatureLookup( 
                 table_name = f"{fs_db}.{fs_enrich_1_table}",
                 feature_names = ['V21', 'V22', 'V23', 'V24'],
                 lookup_key = 'trxn_id',
                 ),
-            ]
-
-            fs_enrich_2_lookups = [ ### Clarify
                 FeatureLookup( 
                 table_name = f"{fs_db}.{fs_enrich_2_table}",
                 feature_names = ['V25', 'V26', 'V27', 'V28', 'Amount'],
                 lookup_key = 'trxn_id',
-                ),
+                )
             ]
 
             # Create the training dataset (includes the raw input data merged with corresponding features from feature table)
             exclude_columns = ['trxn_id']
             training_set = fs.create_training_set(
                 df = raw_data_with_labels,
-                feature_lookups = [fs_enrich_1_lookups, fs_enrich_2_lookups],
+                feature_lookups = feature_lookups,
                 label = "Class",
                 exclude_columns = exclude_columns
             )
@@ -147,8 +144,10 @@ class TrainTask(Task):
             data_pd = training_df.toPandas() #[features_and_label]
 
             # Do the train-test split
-            train, test = train_test_split(data_pd, train_size=train_ratio, random_state=train_seed)
-            
+            train, test = train_test_split(data_pd, train_size=0.7, random_state=92)
+            print(train.shape[0])
+            print(test.shape[0])
+
             # Save train dataset
             train_df = spark.createDataFrame(train)
             train_df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(f"{db_out}.{train_dataset}")                    

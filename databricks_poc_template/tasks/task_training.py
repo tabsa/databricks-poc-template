@@ -145,8 +145,8 @@ class TrainTask(Task):
 
             # Do the train-test split
             train, test = train_test_split(data_pd, train_size=0.7, random_state=92)
-            print(train.shape[0])
-            print(test.shape[0])
+            print(f'Train size: {train.shape[0]} rows')
+            print(f'Test size: {test.shape[0]} rows')
 
             # Save train dataset
             train_df = spark.createDataFrame(train)

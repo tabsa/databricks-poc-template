@@ -74,11 +74,11 @@ class MonitoringTask(Task):
             client = mlflow.tracking.MlflowClient()
             run = client.get_run(latest_model.run_id)
 
-            train_dataset_version = run.data.tags['train_dataset_version']
-            test_dataset_version = run.data.tags['test_dataset_version']
+            train_version = run.data.tags['train_version']
+            test_version = run.data.tags['test_version']
 
-            train_dataset = spark.read.option("versionAsOf", train_dataset_version).table(f"{db_in}.{train_dataset}")
-            test_dataset = spark.read.option("versionAsOf", test_dataset_version).table(f"{db_in}.{test_dataset}")
+            train_dataset = spark.read.option("versionAsOf", train_version).table(f"{db_in}.{train_dataset}")
+            test_dataset = spark.read.option("versionAsOf", test_version).table(f"{db_in}.{test_dataset}")
             df_with_predictions = spark.table(f"{db_in}.{scored_inference_dataset}")   
             label_table =  spark.table(f"{db_in}.{label_table}")                       
 
@@ -96,7 +96,7 @@ class MonitoringTask(Task):
 
         try:       
             train_dataset_pd = train_dataset.toPandas()
-            train_dataset_pd.drop('target', inplace=True, axis=1)
+            train_dataset_pd.drop('Class', inplace=True, axis=1)
             
             # Data drift calculation
             data_columns = ColumnMapping()

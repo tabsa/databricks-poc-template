@@ -4,7 +4,7 @@ data:
   input:
     database: "default"
     raw_data_table: "fraud_features_base" 
-    label_table: "fraud_label" 
+    label_table: "fraud_labels" 
     fs_database: "default"
     fs_enrich_1_table: "fraud_features_enrich1"
     fs_enrich_2_table: "fraud_features_enrich2"

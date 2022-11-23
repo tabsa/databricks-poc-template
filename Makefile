@@ -47,7 +47,7 @@ inference_dev:
 
 inference_uat: # TODO:
 	dbx deploy tabsa-inference-workflow-uat
-	dbx launch inference-workflow-uat --trace	
+	dbx launch tabsa-inference-workflow-uat --trace	
 
 inference_prod: # TODO:
 	dbx deploy tabsa-inference-workflow-prod

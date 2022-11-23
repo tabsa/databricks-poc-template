@@ -7,7 +7,7 @@ import mlflow
 import json
 
 # Import of Sklearn packages
-from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, f1_score, precision_recall_curve
+from sklearn.metrics import accuracy_score, roc_curve, f1_score, precision_recall_curve, auc, matthews_corrcoef
 
 # Import matplotlib packages
 # from IPython.core.pylabtools import figsize
@@ -30,6 +30,23 @@ def calc_confusion_matrix(y_true, y_pred):
     df_conf_matrix.index = pd.Index(['P', 'N'], name='Predicted')
 
     return df_conf_matrix
+
+def performance_metric(y, y_hat, metric) -> float:
+
+    if metric == 'roc_curve':
+        fpr, tpr, _ = roc_curve(y, y_hat)
+        score = auc(fpr, tpr)
+    elif metric == 'precision_recall':
+        precision, recall, _ = precision_recall_curve(y, y_hat)
+        score = auc(recall, precision)
+    elif metric == 'f1_score':
+        score = f1_score(y, y_hat)
+    elif metric == 'matthews_corr':
+        score = matthews_corrcoef(y, y_hat)
+    else:
+        score = None
+    
+    return score
 
 def show_confusion_matrix(y_true, y_pred, filename, labels=['Fraud', 'Normal']):
     """Visualizes confusion matrix."""
@@ -152,13 +169,15 @@ class ValidationTask(Task):
 
             # Accuracy and Confusion Matrix
             test_accuracy = accuracy_score(y_test, y_test_pred)
-            test_roc_score = roc_curve(y_test, y_test_prob)
-            test_prec_recall = precision_recall_curve(y_test, y_test_prob)
-            test_f1_score = f1_score(y_test, y_test_pred)
+            test_roc_score = performance_metric(y_test, y_test_prob, 'roc_curve')
+            test_prec_recall = performance_metric(y_test, y_test_prob, 'precision_recall')
+            test_f1_score = performance_metric(y_test, y_test_pred, 'f1_score')
+            test_matt_score = performance_metric(y_test, y_test_pred, 'matthews_corr')
             print('TEST accuracy = ',test_accuracy)
             print('TEST ROC score = ', test_roc_score)
             print('TEST prec-recall = ', test_prec_recall)
             print('TEST F1 score = ', test_f1_score)
+            print('TEST Matthews correlation = ', test_matt_score)
             print('TEST Confusion matrix:')
             # Classes = ['P', 'N']
             # C = confusion_matrix(y_test, y_test_pred)
@@ -188,6 +207,7 @@ class ValidationTask(Task):
                 mlflow.log_metric("roc_score_TEST", test_roc_score)
                 mlflow.log_metric("precision_recall_TEST", test_prec_recall)
                 mlflow.log_metric("f1_score_TEST", test_f1_score)
+                mlflow.log_metric("matth_corr_TEST", test_matt_score)
                 mlflow.log_metric("Confusion matrix", C)
                 # mlflow.log_figure(fig, "confusion_matrix_TEST.png")  
 

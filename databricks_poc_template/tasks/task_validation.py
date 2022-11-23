@@ -7,16 +7,63 @@ import mlflow
 import json
 
 # Import of Sklearn packages
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score, roc_curve, f1_score, precision_recall_curve, auc, matthews_corrcoef
 
 # Import matplotlib packages
 # from IPython.core.pylabtools import figsize
 from matplotlib import pyplot as plt
+import seaborn as sns
 # import pylab
 from pylab import *
 # import matplotlib.cm as cm
 # import matplotlib.mlab as mlab
 
+def calc_confusion_matrix(y_true, y_pred):
+    """Computes confusion matrix.""" 
+    
+    s_true = pd.Series((1-y_true).astype('int'), name='Actual')
+    s_pred = pd.Series((1-y_pred).astype('int'), name='Predicted')
+
+    df_conf_matrix = pd.crosstab(s_true, s_pred).T
+
+    df_conf_matrix.columns = pd.Index(['P', 'N'], name='Actual')
+    df_conf_matrix.index = pd.Index(['P', 'N'], name='Predicted')
+
+    return df_conf_matrix
+
+def performance_metric(y, y_hat, metric) -> float:
+
+    if metric == 'roc_curve':
+        fpr, tpr, _ = roc_curve(y, y_hat)
+        score = auc(fpr, tpr)
+    elif metric == 'precision_recall':
+        precision, recall, _ = precision_recall_curve(y, y_hat)
+        score = auc(recall, precision)
+    elif metric == 'f1_score':
+        score = f1_score(y, y_hat)
+    elif metric == 'matthews_corr':
+        score = matthews_corrcoef(y, y_hat)
+    else:
+        score = None
+    
+    return score
+
+def show_confusion_matrix(y_true, y_pred, filename, labels=['Fraud', 'Normal']):
+    """Visualizes confusion matrix."""
+         
+    df_conf_matrix = calc_confusion_matrix(y_true, y_pred)
+    
+    fig = plt.figure(figsize=(6, 6)) 
+    
+    sns.heatmap(df_conf_matrix, xticklabels=labels, yticklabels=labels, annot=True, fmt="d",\
+                                cbar=False, center=1, vmin=0.5, vmax=0.5, linewidths=.5); 
+    
+    plt.title("Confusion matrix") 
+    plt.xlabel('True class') 
+    plt.ylabel('Predicted class') 
+    plt.savefig(filename)
+
+    return fig
 
 class ValidationTask(Task):
 
@@ -65,13 +112,9 @@ class ValidationTask(Task):
             # Load the raw data and associated label tables
             test_df = spark.table(f"{db_in}.{test_dataset}")
             test_pd = test_df.toPandas()
-
-            # Feature selection # TODO: AUTOMATE THIS!!!
-            feature_cols = ["sl_norm","sw_norm","pl_norm","pw_norm"] #['sepal_length', 'sepal_width', 'petal_length', 'petal_width']
-            target = 'target'   
-
-            X_test = test_pd[feature_cols]
-            y_test = test_pd[target].values            
+            # Separate X, y
+            X_test = test_pd.drop(['Class'], axis=1)
+            y_test = test_pd.Class.values            
     
             # print("Step 1. completed: Loaded Test data")   
             self.logger.info("Step 1. completed: Loaded Test data")   
@@ -100,7 +143,8 @@ class ValidationTask(Task):
             version = mv.version
             run_id = mv.run_id
             artifact_uri = client.get_model_version_download_uri(model_name, version)
-            model = mlflow.pyfunc.load_model(artifact_uri)            
+            # model = mlflow.pyfunc.load_model(artifact_uri)            
+            model = mlflow.xgboost.load_model(artifact_uri)            
 
             # print("Step 2. completed: load model from MLflow")  
             self.logger.info("Step 2. completed: load model from MLflow")                
@@ -116,38 +160,56 @@ class ValidationTask(Task):
         # =============================================================
         try:                      
             # Derive accuracy on TEST dataset
+            y_test_prob = model.predict_proba(X_test)[:, 1]
             y_test_pred = model.predict(X_test) 
             test_pd['prediction'] = y_test_pred
+            test_pd['score'] = y_test_prob
             test_df_out = spark.createDataFrame(test_pd)            
             test_df_out.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(f"{db_out}.{test_dataset}")             
 
             # Accuracy and Confusion Matrix
             test_accuracy = accuracy_score(y_test, y_test_pred)
+            test_roc_score = performance_metric(y_test, y_test_prob, 'roc_curve')
+            test_prec_recall = performance_metric(y_test, y_test_prob, 'precision_recall')
+            test_f1_score = performance_metric(y_test, y_test_pred, 'f1_score')
+            test_matt_score = performance_metric(y_test, y_test_pred, 'matthews_corr')
             print('TEST accuracy = ',test_accuracy)
+            print('TEST ROC score = ', test_roc_score)
+            print('TEST prec-recall = ', test_prec_recall)
+            print('TEST F1 score = ', test_f1_score)
+            print('TEST Matthews correlation = ', test_matt_score)
             print('TEST Confusion matrix:')
-            Classes = ['setosa','versicolor','virginica']
-            C = confusion_matrix(y_test, y_test_pred)
-            C_normalized = C / C.astype(np.float).sum()        
-            C_normalized_pd = pd.DataFrame(C_normalized,columns=Classes,index=Classes)
-            print(C_normalized_pd)   
+            # Classes = ['P', 'N']
+            # C = confusion_matrix(y_test, y_test_pred)
+            # C_normalized = C / C.astype(np.float).sum()        
+            # C_normalized_pd = pd.DataFrame(C_normalized,columns=Classes,index=Classes)
+            C = calc_confusion_matrix(y_test, y_test_pred)
+            # print(C_normalized_pd)   
+            print(C)
 
             # Figure plot
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            cax = ax.matshow(C,cmap='Blues')
-            plt.title('Confusion matrix of the classifier')
-            fig.colorbar(cax)
-            ax.set_xticklabels([''] + Classes)
-            ax.set_yticklabels([''] + Classes)
-            plt.xlabel('Predicted')
-            plt.ylabel('True')
-            plt.savefig("confusion_matrix_TEST.png")    
+            # fig = show_confusion_matrix(y_test, y_test_pred, 'confusion_matrix_TEST.png')
+            # fig = plt.figure()
+            # ax = fig.add_subplot(111)
+            # cax = ax.matshow(C,cmap='Blues')
+            # plt.title('Confusion matrix of the classifier')
+            # fig.colorbar(cax)
+            # ax.set_xticklabels([''] + Classes)
+            # ax.set_yticklabels([''] + Classes)
+            # plt.xlabel('Predicted')
+            # plt.ylabel('True')
+            # plt.savefig("confusion_matrix_TEST.png")    
 
             with mlflow.start_run(run_id) as run:
 
                 # Tracking performance metrics on TEST dataset   
                 mlflow.log_metric("accuracy_TEST", test_accuracy)
-                mlflow.log_figure(fig, "confusion_matrix_TEST.png")  
+                mlflow.log_metric("roc_score_TEST", test_roc_score)
+                mlflow.log_metric("precision_recall_TEST", test_prec_recall)
+                mlflow.log_metric("f1_score_TEST", test_f1_score)
+                mlflow.log_metric("matth_corr_TEST", test_matt_score)
+                # mlflow.log_metric("Confusion matrix", C)
+                # mlflow.log_figure(fig, "confusion_matrix_TEST.png")  
 
                 # IF we pass the validation, we push the model to Staging tag 
                 print(f"Minimal accuracy threshold: {minimal_threshold:5.2f}")          

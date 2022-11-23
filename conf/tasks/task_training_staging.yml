@@ -3,26 +3,29 @@ environment: "staging"
 data:
   input:
     database: "default"
-    raw_data_table: "raw_data_table" 
-    label_table: "label_table" 
-    fs_schema: "feature_store_poc_template1"
-    fs_table: "scaled_features"  
+    raw_data_table: "fraud_features_base" 
+    label_table: "fraud_labels" 
+    fs_database: "default"
+    fs_enrich_1_table: "fraud_features_enrich1"
+    fs_enrich_2_table: "fraud_features_enrich2"
   output:
     database: "default"
-    train_val_dataset: "train_val_iris_dataset"
-    train_dataset: "train_iris_dataset"
-    test_dataset: "test_iris_dataset"
+    random_state: "92"
+    train_size: "0.7"
+    train_dataset: "fraud_train_dataset"
+    test_dataset: "fraud_test_dataset"
 
 model:
-  model_name: "IrisClassificationRF"
-  experiment_name: "/Shared/simple-rf-sklearn_experiment"
+  model_name: "FraudXGB"
+  experiment_name: "/Shared/fraud-xgboost-pkg_experiment"
   hyperparameters_grid:
     max_depth: [3, 10]
     n_estimators: [30, 50]
-    max_features: ["auto"]
-    criterion: ["gini", "entropy"]
+    # max_features: ["auto"]
+    # criterion: ["gini", "entropy"]
   hyperparameters_fixed:
-    class_weight: "balanced"
-    bootstrap: "True"
-    random_state: "21"
+    # class_weight: "balanced"
+    use_label_encoder: "False"
+    eval_metric: "logloss"
+    random_state: "7"
   minimal_threshold: 0.8

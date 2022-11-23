@@ -221,9 +221,9 @@ class ValidationTask(Task):
                     mlflow.set_tag("validation", "failed")
 
                 # Tracking the Test dataset (with predictions)
-                test_dataset_version = module.get_table_version(spark,f"{db_out}.{test_dataset}")
-                mlflow.set_tag("test_dataset_version", test_dataset_version)
-                mlflow.set_tag("test_dataset", f"{db_out}.{test_dataset}")                    
+                test_version = module.get_table_version(spark,f"{db_out}.{test_dataset}")
+                mlflow.set_tag("test_version", test_version)
+                mlflow.set_tag("test", f"{db_out}.{test_dataset}")                    
                             
             # print("Step 3. completed: model validation")  
             self.logger.info("Step 3. completed: model validation")                

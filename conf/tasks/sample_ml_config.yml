@@ -1,4 +1,4 @@
 input:
   database: "default"
-  table: "sklearn_housing"
-experiment: "/Shared/databricks-poc-template_experiment"
+  table: "xgboost_housing"
+experiment: "/Shared/fraud-xgboost-pkg_experiment"

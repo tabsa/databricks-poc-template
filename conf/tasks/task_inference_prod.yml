@@ -6,7 +6,7 @@ data:
     inference_dataset: "fraud_features_base"
   output:
     database: "default"
-    scored_inference_dataset: "scored_inferencefraud_scored_inference_dataset_dataset"
+    scored_inference_dataset: "fraud_scored_inference_dataset"
 
 model:
   model_name: "FraudXGB"

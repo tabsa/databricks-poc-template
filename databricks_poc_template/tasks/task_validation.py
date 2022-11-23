@@ -208,7 +208,7 @@ class ValidationTask(Task):
                 mlflow.log_metric("precision_recall_TEST", test_prec_recall)
                 mlflow.log_metric("f1_score_TEST", test_f1_score)
                 mlflow.log_metric("matth_corr_TEST", test_matt_score)
-                mlflow.log_metric("Confusion matrix", C)
+                # mlflow.log_metric("Confusion matrix", C)
                 # mlflow.log_figure(fig, "confusion_matrix_TEST.png")  
 
                 # IF we pass the validation, we push the model to Staging tag 

@@ -4,18 +4,16 @@ data:
   input:
     database: "default"
     raw_data_table: "fraud_features_base" 
-    enrich1: "fraud_features_enrich1"
-    enrich2: "fraud_features_enrich2"
     label_table: "fraud_label" 
-    fs_schema: "fraud_feature_store"
-    fs_table: "fraud_features"
+    fs_database: "default"
+    fs_enrich_1_table: "fraud_features_enrich1"
+    fs_enrich_2_table: "fraud_features_enrich2"
   output:
     database: "default"
-    # train_val_dataset: "train_val_iris_dataset"
-    X_train_dataset: "fraud_train_dataset"
-    y_train_dataset: "target_train_dataset"
-    X_test_dataset: "fraud_Test_dataset"
-    y_test_dataset: "target_Test_dataset"
+    random_state: "92"
+    train_size: "0.7"
+    train_dataset: "fraud_train_dataset"
+    test_dataset: "fraud_test_dataset"
 
 model:
   model_name: "FraudXGB"
